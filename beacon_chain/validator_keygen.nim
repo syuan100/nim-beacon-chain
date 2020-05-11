@@ -58,10 +58,12 @@ proc generateDeposits*(totalValidators: int,
     # cleanly allows free intermixing of pre-existing and newly generated
     # deposit and private key files. TODO: only generate new Merkle proof
     # for the most recent deposit if this becomes bottleneck.
-    attachMerkleProofs(result)
+    # attachMerkleProofs(result)
 
     writeTextFile(privKeyFn, privKey.toHex())
     writeFile(depositFn, result[result.len - 1])
+  for i in 1 .. 10:
+    discard result[0].data.hash_tree_root
 
 proc sendDeposits*(
     deposits: seq[Deposit],

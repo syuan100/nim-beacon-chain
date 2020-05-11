@@ -14,17 +14,17 @@ import
   chronos, metrics, json_rpc/[rpcserver, jsonmarshal],
   chronicles,
   json_serialization/std/[options, sets, net], serialization/errors,
-  eth/db/kvstore, eth/db/kvstore_sqlite3,
+  eth/db/kvstore,
   eth/[keys, async_utils], eth/p2p/discoveryv5/[protocol, enr],
 
   # Local modules
   spec/[datatypes, digest, crypto, beaconstate, helpers, validator, network,
     state_transition_block],
-  conf, time, beacon_chain_db, validator_pool,
+  conf, time, validator_pool,
   attestation_pool, block_pool, eth2_network,
   beacon_node_common, beacon_node_types,
-  mainchain_monitor, version, ssz, ssz/dynamic_navigator,
-  request_manager, interop, statusbar,
+  mainchain_monitor, version, ssz,
+  interop,
   attestation_aggregation, sync_manager, sszdump
 
 # Metrics for tracking attestation and beacon block loss

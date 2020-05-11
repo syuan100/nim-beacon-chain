@@ -564,6 +564,9 @@ func maxChunksCount(T: type, maxLen: int64): int64 =
     unsupported T # This should never happen
 
 func hashTreeRootImpl[T](x: T): Eth2Digest =
+  trs "hashTreeRootImpl() FOR ", name(type x)
+  when compiles($x):
+    trs x
   when T is SignedBeaconBlock:
     unsupported T # Blocks are identified by htr(BeaconBlock) so we avoid these
   elif T is bool|char:
@@ -609,6 +612,8 @@ func hashTreeRootImpl[T](x: T): Eth2Digest =
 
 func hash_tree_root*(x: auto): Eth2Digest {.raises: [Defect].} =
   trs "STARTING HASH TREE ROOT FOR TYPE ", name(type(x))
+  when compiles($x):
+    trs x
   mixin toSszType
   when x is TypeWithMaxLen:
     const maxLen = x.maxLen
