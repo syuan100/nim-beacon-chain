@@ -25,45 +25,53 @@ proc generateDeposits*(totalValidators: int,
                        outputDir: string,
                        randomKeys: bool,
                        firstIdx = 0): seq[Deposit] =
-  info "Generating deposits", totalValidators, outputDir, randomKeys
-  for i in 0 ..< totalValidators:
-    let
-      v = validatorFileBaseName(firstIdx + i)
-      depositFn = outputDir / v & ".deposit.json"
-      privKeyFn = outputDir / v & ".privkey"
+  # info "Generating deposits", totalValidators, outputDir, randomKeys
+  # for i in 0 ..< totalValidators:
+    # let
+      # v = validatorFileBaseName(firstIdx + i)
+      # depositFn = outputDir / v & ".deposit.json"
+      # privKeyFn = outputDir / v & ".privkey"
 
-    if existsFile(depositFn) and existsFile(privKeyFn):
-      try:
-        result.add Json.loadFile(depositFn, Deposit)
-        continue
-      except SerializationError as err:
-        debug "Rewriting unreadable deposit", err = err.formatMsg(depositFn)
-        discard
+    # if existsFile(depositFn) and existsFile(privKeyFn):
+      # try:
+        # result.add Json.loadFile(depositFn, Deposit)
+        # continue
+      # except SerializationError as err:
+        # debug "Rewriting unreadable deposit", err = err.formatMsg(depositFn)
+        # discard
 
-    var
-      privkey{.noInit.}: ValidatorPrivKey
-      pubKey{.noInit.}: ValidatorPubKey
+    # var
+      # privkey{.noInit.}: ValidatorPrivKey
+      # pubKey{.noInit.}: ValidatorPubKey
 
-    if randomKeys:
-      (pubKey, privKey) = crypto.newKeyPair().tryGet()
-    else:
-      privKey = makeInteropPrivKey(i).tryGet()
-      pubKey = privKey.toPubKey()
+    # if randomKeys:
+      # (pubKey, privKey) = crypto.newKeyPair().tryGet()
+    # else:
+      # privKey = makeInteropPrivKey(i).tryGet()
+      # pubKey = privKey.toPubKey()
 
-    let dp = makeDeposit(pubKey, privKey)
+    # let dp = makeDeposit(pubKey, privKey)
 
-    result.add(dp)
+    # result.add(dp)
 
-    # Does quadratic additional work, but fast enough, and otherwise more
-    # cleanly allows free intermixing of pre-existing and newly generated
-    # deposit and private key files. TODO: only generate new Merkle proof
-    # for the most recent deposit if this becomes bottleneck.
+    # # Does quadratic additional work, but fast enough, and otherwise more
+    # # cleanly allows free intermixing of pre-existing and newly generated
+    # # deposit and private key files. TODO: only generate new Merkle proof
+    # # for the most recent deposit if this becomes bottleneck.
     # attachMerkleProofs(result)
 
-    writeTextFile(privKeyFn, privKey.toHex())
-    writeFile(depositFn, result[result.len - 1])
-  for i in 1 .. 10:
-    discard result[0].data.hash_tree_root
+    # writeTextFile(privKeyFn, privKey.toHex())
+    # writeFile(depositFn, result[result.len - 1])
+
+  info "Generating deposits", totalValidators, outputDir, randomKeys
+  var
+    privKey = makeInteropPrivKey(0).tryGet()
+    pubKey = privKey.toPubKey()
+  let dp = makeDeposit(pubKey, privKey)
+  for i in 1 .. 6000:
+    if i mod 1000 == 0:
+      echo i
+    discard dp.data.hash_tree_root
 
 proc sendDeposits*(
     deposits: seq[Deposit],
