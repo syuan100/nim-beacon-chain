@@ -326,7 +326,7 @@ proc writeChunk*(conn: Connection,
   await conn.write(output.getOutput)
 
 template errorMsgLit(x: static string): ErrorMsg =
-  const val = ErrorMsg toBytes(x)
+  const val = init(ErrorMsg, toBytes(x))
   val
 
 proc sendErrorResponse(peer: Peer,

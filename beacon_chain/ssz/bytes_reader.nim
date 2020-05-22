@@ -99,7 +99,7 @@ func readSszValue*(input: openarray[byte], T: type): T {.raisesssz.} =
 
   when result is List:
     type ElemType = type result[0]
-    result = T readSszValue(input, seq[ElemType])
+    result = T(data: readSszValue(input, seq[ElemType]))
 
   elif result is seq|openarray|array:
     type ElemType = type result[0]

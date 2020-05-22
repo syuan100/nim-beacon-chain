@@ -478,8 +478,8 @@ proc makeBeaconBlock*(
       randao_reveal: randao_reveal,
       eth1_data: eth1data,
       graffiti: graffiti,
-      attestations: List[Attestation, MAX_ATTESTATIONS](attestations),
-      deposits: List[Deposit, MAX_DEPOSITS](deposits)))
+      attestations: List[Attestation, MAX_ATTESTATIONS](data: attestations),
+      deposits: List[Deposit, MAX_DEPOSITS](data: deposits)))
 
   let tmpState = newClone(state)
   let ok = process_block(tmpState[], blck, {skipBlsValidation}, cache)

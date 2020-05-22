@@ -14,7 +14,9 @@ type
 
   Limit* = int64
 
-  List*[T; maxLen: static Limit] = distinct seq[T]
+  List*[T; maxLen: static Limit] = object
+    data*: seq[T]
+
   BitList*[maxLen: static Limit] = distinct BitSeq
 
   # Note for readers:
@@ -72,21 +74,33 @@ type
     of Field:
       discard
 
-template add*(x: List, val: x.T) = add(distinctBase x, val)
-template len*(x: List): auto = len(distinctBase x)
-template low*(x: List): auto = low(distinctBase x)
-template high*(x: List): auto = high(distinctBase x)
-template `[]`*(x: List, idx: auto): auto = distinctBase(x)[idx]
-template `[]=`*[T; N](x: List[T, N], idx: auto, val: T) = seq[T](x)[idx] = val
-template `==`*(a, b: List): bool = distinctBase(a) == distinctBase(b)
-template asSeq*(x: List): auto = distinctBase x
-template `&`*[T; N](a, b: List[T, N]): List[T, N] = List[T, N](seq[T](a) & seq[T](b))
-template `$`*(x: List): auto = $(distinctBase x)
+template init*[T](L: type List, x: seq[T], N: static Limit): auto =
+  List[T, N](data: x)
 
-template items* (x: List): untyped = items(distinctBase x)
-template pairs* (x: List): untyped = pairs(distinctBase x)
-template mitems*(x: List): untyped = mitems(distinctBase x)
-template mpairs*(x: List): untyped = mpairs(distinctBase x)
+template init*[T, N](L: type List[T, N], x: seq[T]): auto =
+  L(data: x)
+
+template add*(x: List, val: x.T) = add(x.data, val)
+template len*(x: List): auto = len(x.data)
+template low*(x: List): auto = low(x.data)
+template high*(x: List): auto = high(x.data)
+template `[]`*(x: List, idx: auto): auto = x.data[idx]
+template `[]=`*[T; N](x: List[T, N], idx: auto, val: T) = x.data[idx] = val
+template `==`*(a, b: List): bool = a.data == b.data
+template asSeq*(x: List): auto = x.data
+template `&`*[T; N](a, b: List[T, N]): List[T, N] = List[T, N](data: a.data & b.data)
+template `$`*(x: List): auto = $(x.data)
+
+template items* (x: List): untyped = items(x.data)
+template pairs* (x: List): untyped = pairs(x.data)
+template mitems*(x: List): untyped = mitems(x.data)
+template mpairs*(x: List): untyped = mpairs(x.data)
+
+template init*(L: type BitList, x: seq[byte], N: static Limit): auto =
+  BitList[N](data: x)
+
+template init*[N](L: type BitList[N], x: seq[byte]): auto =
+  L(data: x)
 
 template init*(T: type BitList, len: int): auto = T init(BitSeq, len)
 template len*(x: BitList): auto = len(BitSeq(x))

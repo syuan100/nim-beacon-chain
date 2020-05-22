@@ -76,13 +76,13 @@ proc toDigest[N: static int](x: array[N, byte]): Eth2Digest =
 
 suiteReport "SSZ navigator":
   timedTest "simple object fields":
-    var foo = Foo(bar: Bar(b: BarList @[1'u64, 2, 3], baz: Baz(i: 10'u64)))
+    var foo = Foo(bar: Bar(b: BarList.init @[1'u64, 2, 3], baz: Baz(i: 10'u64)))
     let encoded = SSZ.encode(foo)
 
     check SSZ.decode(encoded, Foo) == foo
 
     let mountedFoo = sszMount(encoded, Foo)
-    check mountedFoo.bar.b[] == BarList @[1'u64, 2, 3]
+    check mountedFoo.bar.b[] == BarList.init @[1'u64, 2, 3]
 
     let mountedBar = mountedFoo.bar
     check mountedBar.baz.i == 10'u64
@@ -92,17 +92,17 @@ suiteReport "SSZ navigator":
     let b = [byte 0x04, 0x05, 0x06].toDigest
     let c = [byte 0x07, 0x08, 0x09].toDigest
 
-    let leaves = List[Eth2Digest, int64(1 shl 3)](@[a, b, c])
+    let leaves = List.init(@[a, b, c], 1 shl 3)
     let root = hash_tree_root(leaves)
     check $root == "5248085B588FAB1DD1E03F3CD62201602B12E6560665935964F46E805977E8C5"
 
-    let leaves2 = List[Eth2Digest, int64(1 shl 10)](@[a, b, c])
+    let leaves2 = List.init(@[a, b, c], 1 shl 10)
     let root2 = hash_tree_root(leaves2)
     check $root2 == "9FB7D518368DC14E8CC588FB3FD2749BEEF9F493FEF70AE34AF5721543C67173"
 
 suiteReport "SSZ dynamic navigator":
   timedTest "navigating fields":
-    var fooOrig = Foo(bar: Bar(b: BarList @[1'u64, 2, 3], baz: Baz(i: 10'u64)))
+    var fooOrig = Foo(bar: Bar(b: BarList.init @[1'u64, 2, 3], baz: Baz(i: 10'u64)))
     let fooEncoded = SSZ.encode(fooOrig)
 
     var navFoo = DynamicSszNavigator.init(fooEncoded, Foo)
