@@ -18,6 +18,9 @@ import
   ../../beacon_chain/spec/[beaconstate, datatypes, digest, helpers],
   ../../beacon_chain/ssz
 
+type
+  Depositarium* = Deposit
+
 func round_step_down*(x: Natural, step: static Natural): int {.inline.} =
   ## Round the input to the previous multiple of "step"
   when (step and (step - 1)) == 0:
@@ -87,7 +90,7 @@ proc getMerkleProof*[Depth: static int](
     else:
       result[depth] = ZeroHashes[depth]
 
-proc attachMerkleProofs*(deposits: var seq[Deposit]) =
+proc attachMerkleProofs*(deposits: var seq[Depositarium]) =
   let deposit_data_roots = mapIt(deposits, it.data.hash_tree_root)
   var
     deposit_data_sums: seq[Eth2Digest]

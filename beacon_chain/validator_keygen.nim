@@ -24,7 +24,7 @@ proc ethToWei(eth: UInt256): UInt256 =
 proc generateDeposits*(totalValidators: int,
                        outputDir: string,
                        randomKeys: bool,
-                       firstIdx = 0): seq[Deposit] =
+                       firstIdx = 0): seq[Depositarium] =
   info "Generating deposits", totalValidators, outputDir, randomKeys
   for i in 0 ..< totalValidators:
     let
@@ -34,7 +34,7 @@ proc generateDeposits*(totalValidators: int,
 
     if existsFile(depositFn) and existsFile(privKeyFn):
       try:
-        result.add Json.loadFile(depositFn, Deposit)
+        result.add Json.loadFile(depositFn, Depositarium)
         continue
       except SerializationError as err:
         debug "Rewriting unreadable deposit", err = err.formatMsg(depositFn)
