@@ -164,7 +164,7 @@ proc checkResponse*[T](req: SyncRequest[T],
     return false
 
 proc getPendingMap*[T](sq: SyncQueue[T]): string =
-
+  discard
 
 proc getFullMap*[T](req: SyncRequest[T],
                     data: openarray[SignedBeaconBlock]): string =
