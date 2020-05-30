@@ -379,10 +379,48 @@ suite "SyncManager test suite":
 
     for counter in countdown(32'u64, 2'u64):
       let req = SyncRequest[SomeTPeer](slot: Slot(10), count: counter,
-                                      step: 1'u64)
+                                       step: 1'u64)
       let sr = SyncResult[SomeTPeer](request: req, data: chain1)
       check sr.getLastNonEmptySlot() == Slot(10)
 
     let req = SyncRequest[SomeTPeer](slot: Slot(100), count: 1'u64, step: 1'u64)
     let sr = SyncResult[SomeTPeer](request: req, data: chain2)
     check sr.getLastNonEmptySlot() == Slot(100)
+
+  test "[SyncQueue] checkResponse() test":
+    let chain = createChain(Slot(10), Slot(20))
+    let r1 = SyncRequest[SomeTPeer](slot: Slot(11), count: 1'u64, step: 1'u64)
+    let r21 = SyncRequest[SomeTPeer](slot: Slot(11), count: 2'u64, step: 1'u64)
+    let r22 = SyncRequest[SomeTPeer](slot: Slot(11), count: 2'u64, step: 2'u64)
+
+    check:
+      checkResponse(r1, @[chain[1]]) == true
+      checkResponse(r1, @[]) == true
+      checkResponse(r1, @[chain[1], chain[1]]) == false
+      checkResponse(r1, @[chain[0]]) == false
+      checkResponse(r1, @[chain[2]]) == false
+
+      checkResponse(r21, @[chain[1]]) == true
+      checkResponse(r21, @[]) == true
+      checkResponse(r21, @[chain[1], chain[2]]) == true
+      checkResponse(r21, @[chain[2]]) == true
+      checkResponse(r21, @[chain[1], chain[2], chain[3]]) == false
+      checkResponse(r21, @[chain[0], chain[1]]) == false
+      checkResponse(r21, @[chain[0]]) == false
+      checkResponse(r21, @[chain[2], chain[1]]) == false
+      checkResponse(r21, @[chain[2], chain[1]]) == false
+      checkResponse(r21, @[chain[2], chain[3]]) == false
+      checkResponse(r21, @[chain[3]]) == false
+
+      checkResponse(r22, @[chain[1]]) == true
+      checkResponse(r22, @[]) == true
+      checkResponse(r22, @[chain[1], chain[3]]) == true
+      checkResponse(r22, @[chain[3]]) == true
+      checkResponse(r22, @[chain[1], chain[3], chain[5]]) == false
+      checkResponse(r22, @[chain[0], chain[1]]) == false
+      checkResponse(r22, @[chain[1], chain[2]]) == false
+      checkResponse(r22, @[chain[2], chain[3]]) == false
+      checkResponse(r22, @[chain[3], chain[4]]) == false
+      checkResponse(r22, @[chain[4], chain[5]]) == false
+      checkResponse(r22, @[chain[4]]) == false
+      checkResponse(r22, @[chain[3], chain[1]]) == false
