@@ -11,5 +11,9 @@ proc writeValue*(writer: var JsonWriter, value: MultiAddress) {.inline.} =
   writer.writeValue $value
 
 proc readValue*(reader: var JsonReader, value: var MultiAddress) {.inline.} =
-  value = MultiAddress.init reader.readValue(string)
-
+  let
+    str = reader.readValue(string)
+    v = MultiAddress.init str
+  if v.isErr:
+    raise (ref ValueError)(msg: "Cannot decode multi-address: " & v.error)
+  value = v.get()

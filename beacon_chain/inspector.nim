@@ -242,7 +242,7 @@ proc getBootstrapAddress(bootnode: string): Option[BootstrapAddress] =
         else:
           warn "Incorrect or empty ENR bootstrap address", address = stripped
       else:
-        let ma = MultiAddress.init(stripped)
+        let ma = MultiAddress.init(stripped).tryGet()
         if ETH2BN.match(ma) or DISCV5BN.match(ma):
           let res = BootstrapAddress(kind: BootstrapKind.MultiAddr,
                                      addressMa: ma)
@@ -278,13 +278,12 @@ proc tryGetForkDigest(hexdigest: string): Option[ForkDigest] =
     except CatchableError:
       discard
 
-proc tryGetMultiAddress(address: string): Option[MultiAddress] =
-  try:
-    let ma = MultiAddress.init(address)
-    if IP4.match(ma) or IP6.match(ma):
-      result = some(ma)
-  except MultiAddressError:
-    discard
+proc tryGetMultiAddress(address: string): MaResult[MultiAddress] =
+  let ma = ? MultiAddress.init(address)
+  if IP4.match(ma) or IP6.match(ma):
+    ok(ma)
+  else:
+    err("Unknown address format")
 
 proc loadBootstrapNodes(conf: InspectorConf): seq[BootstrapAddress] =
   result = newSeq[BootstrapAddress]()
@@ -306,8 +305,8 @@ proc init*(p: typedesc[PeerInfo],
            maddr: MultiAddress): Option[PeerInfo] {.inline.} =
   ## Initialize PeerInfo using address which includes PeerID.
   if IPFS.match(maddr):
-    let peerid = maddr[2].protoAddress()
-    result = some(PeerInfo.init(PeerID.init(peerid), [maddr[0] & maddr[1]]))
+    let peerid = maddr[2][].protoAddress()[]
+    result = some(PeerInfo.init(PeerID.init(peerid), [maddr[0][] & (maddr[1][])]))
 
 proc init*(p: typedesc[PeerInfo],
            enraddr: enr.Record): Option[PeerInfo] =
@@ -324,20 +323,24 @@ proc init*(p: typedesc[PeerInfo],
                       skkey: lsecp.SkPublicKey(skpubkey.get())))
           var mas = newSeq[MultiAddress]()
           if trec.ip.isSome() and trec.tcp.isSome():
-            let ma = MultiAddress.init(multiCodec("ip4"), trec.ip.get()) &
-                     MultiAddress.init(multiCodec("tcp"), trec.tcp.get())
+            let ma =
+              MultiAddress.init(multiCodec("ip4"), trec.ip.get()).tryGet() &
+              MultiAddress.init(multiCodec("tcp"), trec.tcp.get()).tryGet()
             mas.add(ma)
           if trec.ip6.isSome() and trec.tcp6.isSome():
-            let ma = MultiAddress.init(multiCodec("ip6"), trec.ip6.get()) &
-                     MultiAddress.init(multiCodec("tcp"), trec.tcp6.get())
+            let ma =
+              MultiAddress.init(multiCodec("ip6"), trec.ip6.get()).tryGet() &
+              MultiAddress.init(multiCodec("tcp"), trec.tcp6.get()).tryGet()
             mas.add(ma)
           if trec.ip.isSome() and trec.udp.isSome():
-            let ma = MultiAddress.init(multiCodec("ip4"), trec.ip.get()) &
-                     MultiAddress.init(multiCodec("udp"), trec.udp.get())
+            let ma =
+              MultiAddress.init(multiCodec("ip4"), trec.ip.get()).tryGet() &
+              MultiAddress.init(multiCodec("udp"), trec.udp.get()).tryGet()
             mas.add(ma)
           if trec.ip6.isSome() and trec.udp6.isSome():
-            let ma = MultiAddress.init(multiCodec("ip6"), trec.ip6.get()) &
-                     MultiAddress.init(multiCodec("udp"), trec.udp6.get())
+            let ma =
+              MultiAddress.init(multiCodec("ip6"), trec.ip6.get()).tryGet() &
+              MultiAddress.init(multiCodec("udp"), trec.udp6.get()).tryGet()
             mas.add(ma)
           result = some(PeerInfo.init(peerid, mas))
   except CatchableError as exc:
@@ -401,12 +404,14 @@ proc connectLoop*(switch: Switch,
 proc toIpAddress*(ma: MultiAddress): Option[IpAddress] =
   if IP4.match(ma):
     let address = ma.protoAddress()
-    result = some(IpAddress(family: IpAddressFamily.IPv4,
-                            address_v4: toArray(4, address)))
+    if address.isOk:
+      result = some(IpAddress(family: IpAddressFamily.IPv4,
+                              address_v4: toArray(4, address[])))
   elif IP6.match(ma):
     let address = ma.protoAddress()
-    result = some(IpAddress(family: IpAddressFamily.IPv6,
-                            address_v6: toArray(16, address)))
+    if address.isOk:
+      result = some(IpAddress(family: IpAddressFamily.IPv6,
+                              address_v6: toArray(16, address[])))
 
 proc bootstrapDiscovery(conf: InspectorConf,
                         host: MultiAddress,
@@ -690,7 +695,7 @@ proc run(conf: InspectorConf) {.async.} =
   # let pubkey = seckey.getKey()
 
   let hostAddress = tryGetMultiAddress(conf.bindAddress)
-  if hostAddress.isNone():
+  if hostAddress.isErr():
     error "Bind address is incorrect MultiAddress", address = conf.bindAddress
     quit(1)
 

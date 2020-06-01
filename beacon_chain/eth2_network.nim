@@ -629,15 +629,15 @@ proc toPeerInfo*(r: enr.TypedRecord): PeerInfo =
     if r.ip.isSome and r.tcp.isSome:
       let ip = IpAddress(family: IpAddressFamily.IPv4,
                          address_v4: r.ip.get)
-      addresses.add MultiAddress.init(ip, TCP, Port r.tcp.get)
+      addresses.add MultiAddress.init(ip, TCP, Port r.tcp.get).tryGet()
 
     if r.ip6.isSome:
       let ip = IpAddress(family: IpAddressFamily.IPv6,
                          address_v6: r.ip6.get)
       if r.tcp6.isSome:
-        addresses.add MultiAddress.init(ip, TCP, Port r.tcp6.get)
+        addresses.add MultiAddress.init(ip, TCP, Port r.tcp6.get).tryGet()
       elif r.tcp.isSome:
-        addresses.add MultiAddress.init(ip, TCP, Port r.tcp.get)
+        addresses.add MultiAddress.init(ip, TCP, Port r.tcp.get).tryGet()
       else:
         discard
 
@@ -958,7 +958,7 @@ proc initAddress*(T: type MultiAddress, str: string): T =
                        "Invalid bootstrap node multi-address")
 
 template tcpEndPoint(address, port): auto =
-  MultiAddress.init(address, Protocol.IPPROTO_TCP, port)
+  MultiAddress.init(address, Protocol.IPPROTO_TCP, port).tryGet()
 
 proc getPersistentNetKeys*(conf: BeaconNodeConf): KeyPair =
   let
